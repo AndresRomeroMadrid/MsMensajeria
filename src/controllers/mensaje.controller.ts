@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import path from 'path';
+import { cleanHtml } from '../utils/string.utils';
 import { sendEmail } from '../services/email.service';
+import { sendTelegramNotification } from '../services/telegram.service';
 
 export const createMensaje = async (req: Request, res: Response) => {
   try {
-    const { quien_envia, quien_recibe, asunto, cuerpo_mensaje, enviar_copia_email } = req.body;
+    const { quien_envia, quien_recibe, asunto, cuerpo_mensaje, enviar_copia_email, enviar_copia_telegram } = req.body;
     let archivoPath = null;
 
     if (req.file) {
@@ -68,8 +70,17 @@ export const createMensaje = async (req: Request, res: Response) => {
         sendEmail(
           recipient, 
           `Nuevo Mensaje: ${asunto}`, 
-          `Has recibido un nuevo mensaje de ${quien_envia}.\n\nAsunto: ${asunto}\n\nMensaje:\n${cuerpo_mensaje.replace(/<[^>]*>/g, '')}`
+          `Has recibido un nuevo mensaje de ${quien_envia}.\n\nAsunto: ${asunto}\n\nMensaje:\n${cleanHtml(cuerpo_mensaje)}`
         ).catch(err => console.error(`Error enviando email a ${recipient}:`, err));
+      }
+
+      // Enviar Telegram si se solicitó
+      if (enviar_copia_telegram === 'true' || enviar_copia_telegram === true) {
+        const cleanMessage = cleanHtml(cuerpo_mensaje);
+        const telegramMsg = `<b>Nuevo Mensaje: ${asunto}</b>\n\nDe: ${quien_envia}\n\n${cleanMessage}`;
+        
+        sendTelegramNotification(telegramMsg)
+          .catch(err => console.error(`Error enviando telegram a ${recipient}:`, err));
       }
     }
 
