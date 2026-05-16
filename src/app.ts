@@ -1,7 +1,7 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import mensajeRoutes from './routes/mensaje.routes';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mensajeRoutes from "./routes/mensaje.routes";
 
 dotenv.config();
 
@@ -13,11 +13,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rutas
-app.use('/api/mensajes', mensajeRoutes);
+app.use("/api/mensajes", mensajeRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'UP', service: 'MsMensajeria' });
+app.get("/health", (req, res) => {
+  res.json({ status: "UP", service: "MsMensajeria" });
 });
 
 export default app;

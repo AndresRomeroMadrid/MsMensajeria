@@ -1,31 +1,37 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: process.env.EMAIL_SECURE === 'true',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
 export const sendEmail = async (to: string, subject: string, text: string, html?: string) => {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL;
+
+  if (!apiKey || !fromEmail) {
+    console.error('Email configuration missing: RESEND_API_KEY or RESEND_FROM_EMAIL');
+    return false;
+  }
+
+  const resend = new Resend(apiKey);
+
   try {
-    const info = await transporter.sendMail({
-      from: `"Libro de Clases" <${process.env.EMAIL_USER}>`,
+    const { error, data } = await resend.emails.send({
+      from: fromEmail,
       to,
       subject,
       text,
-      html,
+      ...(html ? { html } : {}),
     });
-    console.log('Email sent: %s', info.messageId);
+
+    if (error) {
+      console.error('Error sending email with Resend:', error);
+      return false;
+    }
+
+    console.log('Email sent with Resend:', data?.id ?? 'without-id');
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Error sending email with Resend:', error);
     return false;
   }
 };

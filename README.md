@@ -9,7 +9,7 @@ Este microservicio es el encargado de gestionar toda la comunicación interna de
 - **Lenguaje:** TypeScript
 - **Base de Datos:** PostgreSQL
 - **Gestión de Archivos:** Multer (Almacenamiento local)
-- **Email:** Nodemailer (SMTP)
+- **Email:** Resend
 
 ## 📁 Estructura del Proyecto
 
@@ -44,11 +44,8 @@ MsMensajeria/
    DB_PORT=5432
    DB_DATABASE=colegio
    UPLOAD_PATH=C:\ruta\al\directorio\FTP
-   EMAIL_HOST=smtp.gmail.com
-   EMAIL_PORT=587
-   EMAIL_SECURE=false
-   EMAIL_USER=tu-correo@gmail.com
-   EMAIL_PASS=tu-clave-de-aplicacion
+   RESEND_API_KEY=re_xxxxxxxxxxxxxxxxx
+   RESEND_FROM_EMAIL="Libro de Clases <notificaciones@tu-dominio-verificado.com>"
    ```
 
 3. **Iniciar en modo desarrollo:**
@@ -76,7 +73,7 @@ Todos los endpoints tienen el prefijo `/api/mensajes`.
 
 ## 📧 Integración de Correo Electrónico
 
-El microservicio utiliza **Nodemailer** para enviar una copia del mensaje al correo electrónico externo del destinatario si así se solicita en la petición (`enviar_copia_email: true`).
+El microservicio utiliza **Resend** para enviar una copia del mensaje al correo electrónico externo del destinatario si así se solicita en la petición (`enviar_copia_email: true`).
 
 ## 💾 Persistencia de Archivos
 

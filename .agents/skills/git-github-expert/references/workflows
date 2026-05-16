@@ -1,0 +1,290 @@
+# Flujos de Trabajo — GitFlow, GitHub Flow y Trunk-Based
+
+## GitHub Flow — Simple y Efectivo (El Más Recomendado)
+
+```
+Ideal para: equipos que despliegan frecuentemente, proyectos web, SaaS
+Principio: main siempre está listo para desplegar
+
+         main ────────────────────────────────────────────▶
+              \                    ↑
+               feature/login ──────  (PR → merge → delete branch)
+```
+
+```bash
+# Flujo completo de GitHub Flow
+
+# 1. Asegurarte de tener main actualizado
+git checkout main
+git pull origin main
+
+# 2. Crear rama para la feature/fix
+git checkout -b feat/user-authentication
+
+# 3. Trabajar: commits frecuentes y atómicos
+git add .
+git commit -m "feat(auth): add JWT token generation"
+git add .
+git commit -m "feat(auth): add refresh token endpoint"
+git add .
+git commit -m "test(auth): add integration tests for auth flow"
+
+# 4. Mantener la rama actualizada con main (evitar conflictos grandes)
+git fetch origin
+git rebase origin/main   # rebase es mejor que merge para PRs
+
+# 5. Pushear y crear el Pull Request
+git push -u origin feat/user-authentication
+# Crear el PR en GitHub
+
+# 6. Después del code review y aprobación, merge en main
+# (generalmente lo hace la plataforma — GitHub, GitLab, etc.)
+
+# 7. Limpiar la rama local después del merge
+git checkout main
+git pull origin main
+git branch -d feat/user-authentication
+```
+
+---
+
+## GitFlow — Para Proyectos con Releases Formales
+
+```
+Ideal para: librerías, apps móviles, software con versiones definidas
+Ramas permanentes: main (producción) + develop (integración)
+
+main    ────●────────────────────────●───────────────────────▶  (tags: v1.0, v1.1)
+            │                        │
+            ●──── hotfix/crítico ────●
+            │
+develop ────●──────────────────────────────────────────────▶
+              \          ↑        \          ↑
+               feature/A ─         feature/B ─
+                                    \          ↑
+                                     release/1.1─
+```
+
+```bash
+# Usando git-flow extension (simplifica los comandos)
+# Instalar: brew install git-flow-avh
+
+# Inicializar en un repo existente
+git flow init   # acepta los defaults
+
+# ── Feature ──────────────────────────────────────────────────────────
+git flow feature start user-authentication
+# Crea: feature/user-authentication desde develop
+
+# Trabajar en la feature...
+git add .
+git commit -m "feat: implement OAuth2 login"
+
+git flow feature finish user-authentication
+# Hace: merge de feature/user-authentication en develop
+# Borra: la rama feature local
+
+git flow feature publish user-authentication  # si otros están trabajando en ella
+git flow feature pull origin user-authentication
+
+# ── Release ──────────────────────────────────────────────────────────
+git flow release start 1.2.0
+# Crea: release/1.2.0 desde develop
+# En esta rama: solo bugfixes, actualizar version, changelog
+
+git flow release finish 1.2.0
+# Hace: merge en main Y en develop
+# Crea: tag v1.2.0 en main
+
+# ── Hotfix ───────────────────────────────────────────────────────────
+git flow hotfix start critical-payment-bug
+# Crea: hotfix/critical-payment-bug desde main
+
+# Arreglar el bug
+git add .
+git commit -m "fix: prevent duplicate charges in payment processing"
+
+git flow hotfix finish critical-payment-bug
+# Hace: merge en main Y en develop
+# Crea: tag con la versión hotfix
+
+# Sin la extensión (manual)
+# Feature:
+git checkout develop && git checkout -b feature/nueva-feature
+# ... trabajo ...
+git checkout develop && git merge --no-ff feature/nueva-feature && git branch -d feature/nueva-feature
+```
+
+---
+
+## Trunk-Based Development — Para Integración Continua Real
+
+```
+Ideal para: equipos con CI/CD maduro, alta frecuencia de deploys
+Principio: todos trabajan en main (trunk), ramas de muy corta vida
+
+main ──●──●──●──●──●──●──●──●──●──●──▶  (deploys frecuentes)
+         \↑  \↑  \↑
+         SR  SR  SR   (Short-lived branches, máximo 2 días)
+```
+
+```bash
+# Las ramas duran máximo 1-2 días
+# Si dura más, la feature es demasiado grande — dividirla
+
+# Feature Flags para trabajo en progreso
+# En el código:
+if (featureFlags.isEnabled('new-checkout-flow')) {
+    return <NewCheckout />;
+}
+return <OldCheckout />;
+
+# La feature se activa cuando está lista, no cuando el código se mergea
+
+# Flujo típico:
+git checkout -b feat/add-coupon-validation  # rama corta
+# ... trabajo de 1 día ...
+git rebase origin/main                       # actualizar
+git push origin feat/add-coupon-validation
+# PR → review rápido → merge en main el mismo día
+# Desactivado con feature flag hasta que esté completo
+
+# Para equipos sin feature flags: commits pequeños directamente en main
+git checkout main
+git pull
+# hacer cambio pequeño y testeable
+git add .
+git commit -m "feat: add coupon model and migrations"
+git push
+```
+
+---
+
+## Semantic Versioning y Tags
+
+```bash
+# Semantic Versioning: MAJOR.MINOR.PATCH
+# MAJOR: cambios breaking (API incompatible con la anterior)
+# MINOR: nuevas features, backward compatible
+# PATCH: bugfixes, backward compatible
+
+# Crear tags
+git tag v1.2.3                              # tag ligero (solo apunta al commit)
+git tag -a v1.2.3 -m "Release version 1.2.3"  # tag anotado (con metadata) ← preferido
+
+# Tag con mensaje extenso
+git tag -a v1.2.3 -m "
+Release v1.2.3
+
+New features:
+- Add coupon support in checkout
+- Add order status notifications
+
+Bug fixes:
+- Fix duplicate charge issue #123
+- Fix address validation for international orders #145
+"
+
+# Listar tags
+git tag
+git tag -l "v1.*"                          # con filtro
+git tag -l --sort=-version:refname          # ordenado de más nuevo a más viejo
+
+# Pushear tags al remoto
+git push origin v1.2.3                     # un tag específico
+git push origin --tags                      # todos los tags
+git push origin "refs/tags/v1*"            # tags que coincidan con el patrón
+
+# Borrar un tag
+git tag -d v1.2.3                          # local
+git push origin --delete v1.2.3            # remoto
+
+# Crear tag en un commit anterior
+git tag -a v1.1.0 a1b2c3d -m "Release v1.1.0"
+
+# Ver qué hay en un tag
+git show v1.2.3
+
+# Checkout a un tag específico (detached HEAD)
+git checkout v1.2.3
+# Para trabajar desde ese tag:
+git checkout -b hotfix/from-v1.2.3 v1.2.3
+```
+
+---
+
+## Conventional Commits y Herramientas de Calidad
+
+```bash
+# Conventional Commits + Commitlint + Husky
+# Para forzar mensajes de commit con formato estándar
+
+# Instalar
+npm install --save-dev @commitlint/cli @commitlint/config-conventional husky
+
+# commitlint.config.js
+module.exports = {
+    extends: ['@commitlint/config-conventional'],
+    rules: {
+        'type-enum': [2, 'always', [
+            'feat', 'fix', 'docs', 'style', 'refactor',
+            'test', 'chore', 'ci', 'build', 'perf', 'revert'
+        ]],
+        'subject-max-length': [2, 'always', 72],
+        'body-max-line-length': [0, 'always', 100],
+    }
+};
+
+# .husky/commit-msg
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+npx --no -- commitlint --edit "$1"
+
+# Tipos con sus emojis (para equipos que usan gitmoji):
+# feat:     ✨ nueva funcionalidad
+# fix:      🐛 corrección de bug
+# docs:     📝 documentación
+# style:    💄 formato
+# refactor: ♻️  refactorización
+# test:     ✅ tests
+# chore:    🔧 mantenimiento
+# ci:       👷 CI/CD
+# perf:     ⚡ performance
+# revert:   ⏪ revertir
+
+# CHANGELOG automático con standard-version o semantic-release
+npm install --save-dev semantic-release
+# semantic-release analiza los commits y:
+# - determina la versión (semver) automáticamente
+# - genera el CHANGELOG
+# - crea el tag y el release en GitHub
+# - publica el paquete en npm (si aplica)
+```
+
+---
+
+## Monorepos con Git
+
+```bash
+# Git Submodules — repos dentro de repos
+git submodule add https://github.com/org/shared-lib.git libs/shared
+git submodule update --init --recursive   # clonar con submodulos
+git submodule update --remote             # actualizar a la última versión del remoto
+
+# Git Subtree — alternativa más simple a submodules
+git subtree add --prefix=libs/shared https://github.com/org/shared-lib.git main --squash
+git subtree pull --prefix=libs/shared https://github.com/org/shared-lib.git main --squash
+git subtree push --prefix=libs/shared https://github.com/org/shared-lib.git main
+
+# Worktrees — múltiples working directories del mismo repo
+git worktree add ../proyecto-v2 v2-branch   # abrir v2-branch en otro directorio
+git worktree list                            # ver todos los worktrees
+git worktree remove ../proyecto-v2          # eliminar el worktree
+
+# Sparse Checkout — solo hacer checkout de parte del repo (monorepo grande)
+git clone --filter=blob:none --no-checkout https://github.com/org/monorepo.git
+cd monorepo
+git sparse-checkout init --cone
+git sparse-checkout set apps/frontend packages/ui   # solo estas carpetas
+git checkout main
+```
