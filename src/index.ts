@@ -1,5 +1,6 @@
 import app from './app';
 import dotenv from 'dotenv';
+import { initGestionConsumer } from './consumers/gestion.consumer';
 
 dotenv.config();
 
@@ -11,4 +12,8 @@ app.listen(PORT, () => {
   📁 Ruta de archivos: ${process.env.UPLOAD_PATH}
   ✨ ¡Listo para recibir mensajes!
   `);
+
+  initGestionConsumer().catch((err) => {
+    console.error('❌ Error inesperado al iniciar consumidor RabbitMQ:', err);
+  });
 });
