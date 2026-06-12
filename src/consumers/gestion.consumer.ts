@@ -73,7 +73,7 @@ export const initGestionConsumer = async (): Promise<void> => {
     QUEUE_NAME,
     async (msg) => {
       if (!msg) {
-        console.warn('[RabbitMQ] Mensaje nulo recibido (consumer cancelado por el broker).');
+        console.error('[RabbitMQ] ❌ Consumer cancelado por el broker. Los mensajes de gestion.queue NO se procesarán hasta reiniciar el servicio. Revisá la UI de RabbitMQ en :15672.');
         return;
       }
 
