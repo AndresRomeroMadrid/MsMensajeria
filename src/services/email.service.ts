@@ -1,37 +1,40 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 export const sendEmail = async (to: string, subject: string, text: string, html?: string) => {
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL;
+  const host = process.env.MAIL_HOST;
+  const port = process.env.MAIL_PORT;
+  const user = process.env.MAIL_USER;
+  const pass = process.env.MAIL_PASS;
 
-  if (!apiKey || !fromEmail) {
-    console.error('Email configuration missing: RESEND_API_KEY or RESEND_FROM_EMAIL');
+  if (!host || !port || !user || !pass) {
+    console.error('Email configuration missing: MAIL_HOST, MAIL_PORT, MAIL_USER or MAIL_PASS');
     return false;
   }
 
-  const resend = new Resend(apiKey);
+  const portNumber = parseInt(port, 10);
+  const transporter = nodemailer.createTransport({
+    host,
+    port: portNumber,
+    secure: portNumber === 465,
+    auth: { user, pass },
+  });
 
   try {
-    const { error, data } = await resend.emails.send({
-      from: fromEmail,
+    const info = await transporter.sendMail({
+      from: user,
       to,
       subject,
       text,
       ...(html ? { html } : {}),
     });
 
-    if (error) {
-      console.error('Error sending email with Resend:', error);
-      return false;
-    }
-
-    console.log('Email sent with Resend:', data?.id ?? 'without-id');
+    console.log('Email sent:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending email with Resend:', error);
+    console.error('Error sending email:', error);
     return false;
   }
 };
