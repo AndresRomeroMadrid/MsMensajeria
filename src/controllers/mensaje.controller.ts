@@ -7,7 +7,7 @@ import { sendTelegramNotification } from '../services/telegram.service';
 
 export const createMensaje = async (req: Request, res: Response) => {
   try {
-    const { quien_envia, quien_recibe, asunto, cuerpo_mensaje, enviar_copia_email, enviar_copia_telegram } = req.body;
+    const { quien_envia, quien_recibe, asunto, cuerpo_mensaje, enviar_copia_telegram } = req.body;
     let archivoPath = null;
 
     if (req.file) {
@@ -64,15 +64,11 @@ export const createMensaje = async (req: Request, res: Response) => {
       const result = await pool.query(query, values);
       results.push(result.rows[0]);
 
-      // Enviar correo si se solicitó
-      if (enviar_copia_email === 'true' || enviar_copia_email === true) {
-        // Lo enviamos de forma asíncrona para no retrasar la respuesta
-        sendEmail(
-          recipient, 
-          `Nuevo Mensaje: ${asunto}`, 
-          `Has recibido un nuevo mensaje de ${quien_envia}.\n\nAsunto: ${asunto}\n\nMensaje:\n${cleanHtml(cuerpo_mensaje)}`
-        ).catch(err => console.error(`Error enviando email a ${recipient}:`, err));
-      }
+      sendEmail(
+        recipient,
+        `Nuevo Mensaje: ${asunto}`,
+        `Has recibido un nuevo mensaje de ${quien_envia}.\n\nAsunto: ${asunto}\n\nMensaje:\n${cleanHtml(cuerpo_mensaje)}`
+      ).catch(err => console.error(`Error enviando email a ${recipient}:`, err));
 
       // Enviar Telegram si se solicitó
       if (enviar_copia_telegram === 'true' || enviar_copia_telegram === true) {
