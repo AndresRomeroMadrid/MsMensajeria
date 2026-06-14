@@ -9,6 +9,34 @@ env:
     IMAGE_NAME: ${{secrets.DOCKER_USERNAME}}/ms-comunicaciones
 
 jobs:
+
+
+    test:
+      name: Run Tests
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Setup Node
+          uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+            cache: 'npm'
+        - name: Install dependencies
+          run: npm install
+        - name: Run tests with coverage
+          run: npx vitest run --coverage --coverage.reporter=html --coverage.reporter=text
+        - name: Upload coverage report
+          if: always()  # sube el reporte aunque fallen los tests
+          uses: actions/upload-artifact@v4
+          with:
+            name: coverage-report
+            path: coverage/
+            retention-days: 7
+
+
     build_and_push:
         name: Build and Push Docker Image
         runs-on: ubuntu-latest

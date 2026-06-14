@@ -4,6 +4,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/tests/**/*.test.ts'],
+    include: ['test/unit/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/config/**', 'src/index.ts', 'src/app.ts', 'src/routes/**'],
+      thresholds: { lines: 80 },
+    },
   },
 });
