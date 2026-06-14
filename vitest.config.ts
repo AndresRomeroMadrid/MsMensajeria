@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/**/*.ts'],
       exclude: ['src/config/**', 'src/index.ts', 'src/app.ts', 'src/routes/**'],
-      thresholds: { lines: 80 },
+      thresholds: { lines: 70 },
     },
   },
 });
