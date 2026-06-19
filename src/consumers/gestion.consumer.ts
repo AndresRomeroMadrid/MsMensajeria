@@ -1,5 +1,6 @@
 import amqplib from 'amqplib';
 import { sendEmail } from '../services/email.service';
+import { initGestionSqsConsumer } from './gestion.sqs.consumer';
 
 const QUEUE_NAME = 'gestion.queue';
 const MAX_RETRIES = 5;
@@ -19,6 +20,10 @@ interface GestionMessage {
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const initGestionConsumer = async (): Promise<void> => {
+  if (process.env.ENVIRONMENT === 'prod') {
+    return initGestionSqsConsumer();
+  }
+
   const rabbitmqUrl = process.env.RABBITMQ_URL;
 
   console.log('[RabbitMQ] Iniciando consumidor...');
